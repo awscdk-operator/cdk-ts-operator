@@ -1,6 +1,6 @@
 # AWS CDK Operator for Kubernetes
 
-A Kubernetes operator that enables declarative management of AWS CDK (Cloud Development Kit) stacks using Custom Resource Definitions (CRDs). Deploy, update, and manage your AWS infrastructure directly from Kubernetes manifests with full lifecycle support.
+A Kubernetes operator that enables declarative management of TypeScript [AWS CDK (Cloud Development Kit)](https://aws.amazon.com/cdk/) stacks using Custom Resource Definitions (CRDs). Deploy, update, and manage your AWS infrastructure directly from Kubernetes manifests with full lifecycle support.
 
 Built on top of [Shell Operator](https://flant.github.io/shell-operator/) by Flant, this operator provides a robust foundation for managing AWS infrastructure through GitOps workflows.
 
