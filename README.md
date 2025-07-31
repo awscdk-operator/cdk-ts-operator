@@ -16,7 +16,7 @@ Built on top of [Shell Operator](https://flant.github.io/shell-operator/) by Fla
 
 ## 📖 Documentation
 
-📚 **[Complete Documentation](https://awscdk-operator.github.io/cdk-ts-operator/)**
+📚 **[Complete Documentation](https://awscdk.dev/)**
 
 ## 🛠 Quick Installation
 
