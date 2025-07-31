@@ -4,3 +4,4 @@ DEBUG.MD
 *.tgz
 *.tar.gz
 charts/*.tgz
+!docs/charts/*.tgz
