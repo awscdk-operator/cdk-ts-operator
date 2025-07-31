@@ -106,6 +106,6 @@ This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENS
 
 ## 🔗 Links
 
-- **Documentation**: https://awscdk-operator.github.io/cdk-ts-operator/
+- **Documentation**: https://awscdk.dev/
 - **GitHub**: https://github.com/awscdk-operator/cdk-ts-operator
 - **Shell Operator**: https://flant.github.io/shell-operator/
