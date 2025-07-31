@@ -49,6 +49,7 @@ LABEL org.opencontainers.image.title="AWS CDK Operator" \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     git \
+    curl \
     openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
