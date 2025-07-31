@@ -1,0 +1,44 @@
+AWS CDK Operator has been installed!
+
+🚀 The AWS CDK TypeScript Operator is now running in namespace: {{ .Values.operator.namespace }}
+
+📋 To get started:
+
+1. Create AWS credentials secret:
+   kubectl create secret generic {{ .Values.ssh.secretName }} \
+     --from-file=ssh-privatekey=/path/to/your/ssh/private/key \
+     -n {{ .Values.operator.namespace }}
+
+2. Create your first CDK stack:
+   kubectl apply -f - <<EOF
+   apiVersion: awscdk.dev/v1alpha1
+   kind: CdkTsStack
+   metadata:
+     name: my-first-stack
+     namespace: default
+   spec:
+     stackName: "MyFirstStack"
+     credentialsSecretName: "aws-credentials"
+     source:
+       git:
+         repository: "https://github.com/your-org/your-cdk-repo.git"
+         ref: "main"
+     path: "."
+     awsRegion: "us-east-1"
+     actions:
+       deploy: true
+       destroy: false
+       driftDetection: true
+   EOF
+
+3. Check the operator status:
+   kubectl get pods -n {{ .Values.operator.namespace }}
+   kubectl logs -n {{ .Values.operator.namespace }} deployment/{{ include "aws-cdk-operator.fullname" . }}
+
+4. Monitor your CDK stacks:
+   kubectl get cdktstacks --all-namespaces
+   kubectl describe cdktsstack my-first-stack
+
+📊 Metrics are available at: :9115/metrics
+
+For more examples, visit: https://github.com/awscdk-operator/awscdk-operator/tree/main/examples

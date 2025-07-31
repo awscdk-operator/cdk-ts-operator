@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aws-cdk-operator.fullname" . }}
+  namespace: {{ .Values.operator.namespace }}
+  labels:
+    {{- include "aws-cdk-operator.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "aws-cdk-operator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "aws-cdk-operator.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: shell-operator
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: DEBUG_MODE
+              value: {{ .Values.operator.env.debugMode | quote }}
+            - name: DRIFT_CHECK_CRON
+              value: {{ .Values.operator.env.driftCheckCron | quote }}
+            - name: GIT_SYNC_CHECK_CRON
+              value: {{ .Values.operator.env.gitSyncCheckCron | quote }}
+            - name: SHELL_OPERATOR_PROMETHEUS_METRICS_PREFIX
+              value: {{ .Values.operator.env.metricsPrefix | quote }}
+            {{- if .Values.operator.env.cdkDefaultAccount }}
+            - name: CDK_DEFAULT_ACCOUNT
+              value: {{ .Values.operator.env.cdkDefaultAccount | quote }}
+            {{- end }}
+            {{- if .Values.operator.env.cdkDefaultRegion }}
+            - name: CDK_DEFAULT_REGION
+              value: {{ .Values.operator.env.cdkDefaultRegion | quote }}
+            {{- end }}
+            {{- if .Values.operator.env.nodeOptions }}
+            - name: NODE_OPTIONS
+              value: {{ .Values.operator.env.nodeOptions | quote }}
+            {{- end }}
+          ports:
+            - containerPort: {{ .Values.container.port }}
+              name: {{ .Values.container.portName }}
+              protocol: TCP
+          {{- if .Values.container.probes.liveness.enabled }}
+          livenessProbe:
+            {{- toYaml (omit .Values.container.probes.liveness "enabled") | nindent 12 }}
+          {{- end }}
+          {{- if .Values.container.probes.readiness.enabled }}
+          readinessProbe:
+            {{- toYaml (omit .Values.container.probes.readiness "enabled") | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: ssh-key
+              mountPath: {{ .Values.container.sshMountPath }}/id_rsa
+              subPath: ssh-privatekey
+              readOnly: true
+            - name: ssh-config
+              mountPath: {{ .Values.container.sshMountPath }}/config
+              subPath: config
+              readOnly: true
+            - name: ssh-config
+              mountPath: {{ .Values.container.sshMountPath }}/known_hosts
+              subPath: known_hosts
+              readOnly: true
+      volumes:
+        - name: ssh-key
+          secret:
+            secretName: {{ .Values.ssh.secretName }}
+            defaultMode: 0600
+            optional: true
+        - name: ssh-config
+          configMap:
+            name: {{ .Values.ssh.configMapName }}
+            defaultMode: 0600
+            optional: true
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

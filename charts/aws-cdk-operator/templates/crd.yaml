@@ -1,0 +1,163 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # name must be in the format <plural>.<group>
+  name: cdktsstacks.awscdk.dev
+spec:
+  # group name to use for REST API: /apis/<group>/<version>
+  group: awscdk.dev
+  # list of versions supported by this CustomResourceDefinition
+  versions:
+    - name: v1alpha1
+      # Each version can be enabled/disabled by Served flag.
+      served: true
+      # One and only one version must be marked as the storage version.
+      storage: true
+      schema:
+        # schema used for validation, pruning, and defaulting
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                stackName:
+                  type: string
+                  description: "The name of the CDK stack to deploy"
+                credentialsSecretName:
+                  type: string
+                  description: "The name of the secret containing AWS credentials"
+                source:
+                  type: object
+                  properties:
+                    git:
+                      type: object
+                      properties:
+                        repository:
+                          type: string
+                          description: "Git repository URL"
+                        ref:
+                          type: string
+                          description: "Git branch or tag"
+                          default: "main"
+                      required:
+                        - repository
+                  required:
+                    - git
+                path:
+                  type: string
+                  description: "Path within the repository to the CDK project"
+                  default: "."
+                awsRegion:
+                  type: string
+                  description: "AWS region for CDK deployment"
+                  default: "us-east-1"
+                cdkContext:
+                  type: array
+                  description: "Additional CDK context parameters"
+                  items:
+                    type: string
+                actions:
+                  type: object
+                  description: "Control which actions the operator can perform"
+                  properties:
+                    deploy:
+                      type: boolean
+                      description: "Allow CDK stack deployment"
+                    destroy:
+                      type: boolean
+                      description: "Allow CDK stack destruction on resource deletion"
+                    driftDetection:
+                      type: boolean
+                      description: "Enable drift detection checks"
+                    autoRedeploy:
+                      type: boolean
+                      description: "Enable automatic deployment when Git changes are detected (requires deploy: true)"
+                  required:
+                    - deploy
+                    - destroy
+                    - driftDetection
+                lifecycleHooks:
+                  type: object
+                  description: "Shell commands to execute at various lifecycle stages"
+                  properties:
+                    beforeDeploy:
+                      type: string
+                      description: "Shell command to execute before CDK deploy"
+                    afterDeploy:
+                      type: string
+                      description: "Shell command to execute after successful CDK deploy"
+                    beforeDestroy:
+                      type: string
+                      description: "Shell command to execute before CDK destroy"
+                    afterDestroy:
+                      type: string
+                      description: "Shell command to execute after successful CDK destroy"
+                    beforeDriftDetection:
+                      type: string
+                      description: "Shell command to execute before drift detection"
+                    afterDriftDetection:
+                      type: string
+                      description: "Shell command to execute after drift detection"
+                    beforeGitSync:
+                      type: string
+                      description: "Shell command to execute before Git sync check"
+                    afterGitSync:
+                      type: string
+                      description: "Shell command to execute after Git sync check"
+              required:
+                - stackName
+                - credentialsSecretName
+                - source
+                - actions
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: ["", "Cloning", "Installing", "Deploying", "Succeeded", "Failed", "Deleting", "DriftChecking", "GitSyncChecking"]
+                message:
+                  type: string
+                lastDeploy:
+                  type: string
+                  format: date-time
+                lastDriftCheck:
+                  type: string
+                  format: date-time
+                driftDetected:
+                  type: boolean
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+      - name: Phase
+        type: string
+        description: The current phase of the stack
+        jsonPath: .status.phase
+      - name: Last Deploy
+        type: date
+        description: Last successful deployment time
+        jsonPath: .status.lastDeploy
+      - name: Last Drift Check
+        type: date
+        description: Last drift check time
+        jsonPath: .status.lastDriftCheck
+      - name: Drift
+        type: boolean
+        description: Whether drift was detected
+        jsonPath: .status.driftDetected
+      - name: Age
+        type: date
+        jsonPath: .metadata.creationTimestamp
+  # either Namespaced or Cluster
+  scope: Namespaced
+  names:
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: cdktsstacks
+    # singular name to be used as an alias on the CLI and for display
+    singular: cdktsstack
+    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    kind: CdkTsStack
+    # shortNames allow shorter string to match your resource on the CLI
+    shortNames:
+      - cdk
+      - cdkts 

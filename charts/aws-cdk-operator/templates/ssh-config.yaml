@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.ssh.configMapName }}
+  namespace: {{ .Values.operator.namespace }}
+  labels:
+    {{- include "aws-cdk-operator.labels" . | nindent 4 }}
+data:
+  config: |
+{{- range $name, $config := .Values.ssh.hosts }}
+    Host {{ $config.hostname }}
+        HostName {{ $config.hostname }}
+        User {{ $config.user }}
+        IdentityFile {{ $.Values.container.sshMountPath }}/id_rsa
+        StrictHostKeyChecking {{ if $config.strictHostKeyChecking }}yes{{ else }}no{{ end }}
+        UserKnownHostsFile {{ $.Values.container.sshMountPath }}/known_hosts
+        {{- if $config.port }}
+        Port {{ $config.port }}
+        {{- end }}
+
+{{- end }}
+    Host *
+        IdentityFile {{ .Values.container.sshMountPath }}/id_rsa
+        StrictHostKeyChecking yes
+        UserKnownHostsFile {{ .Values.container.sshMountPath }}/known_hosts
+  known_hosts: |
+{{- range $provider, $keys := .Values.ssh.knownHosts }}
+  {{- range $keys }}
+    {{ . }}
+  {{- end }}
+{{- end }} 

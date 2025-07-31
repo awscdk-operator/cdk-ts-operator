@@ -1,0 +1,33 @@
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "aws-cdk-operator.fullname" . }}
+  labels:
+    {{- include "aws-cdk-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["awscdk.dev"]
+    resources: ["cdktsstacks", "cdktsstacks/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""] # Core API group
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""] # Core API group
+    resources: ["events"]
+    verbs: ["get", "list", "create", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "aws-cdk-operator.fullname" . }}
+  labels:
+    {{- include "aws-cdk-operator.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.serviceAccount.name }}
+    namespace: {{ .Values.operator.namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "aws-cdk-operator.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
