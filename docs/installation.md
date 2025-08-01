@@ -21,7 +21,7 @@ The recommended way to install the AWS CDK Operator is using the Helm chart.
 
 ```bash
 # Add the Helm repository (when published)
-helm repo add awscdk-operator https://awscdk-operator.github.io/helm-charts
+helm repo add aws-cdk-operator https://awscdk.dev/charts
 helm repo update
 ```
 
@@ -32,7 +32,7 @@ helm repo update
 kubectl create namespace awscdk-operator-system
 
 # Install the operator
-helm install awscdk-operator awscdk-operator/aws-cdk-operator \
+helm install awscdk-operator aws-cdk-operator/aws-cdk-operator \
   --namespace awscdk-operator-system \
   --create-namespace \
   --set operator.env.debugMode=false
@@ -76,7 +76,7 @@ ssh:
 Then install with custom values:
 
 ```bash
-helm install awscdk-operator awscdk-operator/aws-cdk-operator \
+helm install awscdk-operator aws-cdk-operator/aws-cdk-operator \
   --namespace awscdk-operator-system \
   --create-namespace \
   -f values.yaml
@@ -96,7 +96,7 @@ spec:
   project: default
   source:
     chart: aws-cdk-operator
-    repoURL: https://awscdk-operator.github.io/helm-charts
+    repoURL: https://awscdk.dev/charts
     targetRevision: "1.0.0"
     helm:
       parameters:
@@ -229,7 +229,7 @@ data:
 helm repo update
 
 # Upgrade the operator
-helm upgrade awscdk-operator awscdk-operator/aws-cdk-operator \
+helm upgrade awscdk-operator aws-cdk-operator/aws-cdk-operator \
   --namespace awscdk-operator-system
 ```
 

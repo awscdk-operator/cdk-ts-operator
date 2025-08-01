@@ -1,13 +1,13 @@
 # AWS CDK Operator for Kubernetes
 
-A Kubernetes operator that enables declarative management of TypeScript [AWS CDK (Cloud Development Kit)](https://aws.amazon.com/cdk/) stacks using Custom Resource Definitions (CRDs). Deploy, update, and manage your AWS infrastructure directly from Kubernetes manifests with full lifecycle support.
+A Kubernetes operator that enables declarative management of AWS CDK (Cloud Development Kit) stacks using Custom Resource Definitions (CRDs). Deploy, update, and manage your AWS infrastructure directly from Kubernetes manifests with full lifecycle support.
 
 Built on top of [Shell Operator](https://flant.github.io/shell-operator/) by Flant, this operator provides a robust foundation for managing AWS infrastructure through GitOps workflows.
 
 ## 🚀 Features
 
 - **Declarative Infrastructure**: Manage AWS CDK stacks as Kubernetes resources
-- **Full Lifecycle Management**: Deploy, update, destroy, and drift detection  
+- **Full Lifecycle Management**: Deploy, update, destroy, and drift detection
 - **Git Integration**: Automatically sync and deploy from Git repositories
 - **Lifecycle Hooks**: Execute custom scripts at various stages of stack lifecycle
 - **Multi-Region Support**: Deploy stacks across different AWS regions
@@ -23,8 +23,8 @@ Built on top of [Shell Operator](https://flant.github.io/shell-operator/) by Fla
 Install via Helm (recommended):
 
 ```bash
-helm repo add awscdk-operator https://awscdk-operator.github.io/helm-charts
-helm install awscdk-operator awscdk-operator/aws-cdk-operator \
+helm repo add aws-cdk-operator https://awscdk.dev/charts
+helm install awscdk-operator aws-cdk-operator/aws-cdk-operator \
   --namespace awscdk-operator-system \
   --create-namespace
 ```
@@ -73,7 +73,7 @@ For a complete walkthrough, see the [Quick Start Guide](docs/quick-start.md).
 ## 📚 Examples
 
 - [Basic Stack](docs/examples/01-basic-stack.md) - Simple S3 bucket deployment
-- [Multi-Region](docs/examples/02-multi-region.md) - Deploy across multiple regions  
+- [Multi-Region](docs/examples/02-multi-region.md) - Deploy across multiple regions
 - [With Context](docs/examples/03-with-context.md) - Environment-specific configurations
 - [Lifecycle Hooks](docs/examples/04-lifecycle-hooks.md) - Custom automation
 - [Production Ready](docs/examples/08-production-ready.md) - Complete production setup
