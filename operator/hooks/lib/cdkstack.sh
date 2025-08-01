@@ -406,10 +406,29 @@ check_git_sync() {
         create_event "${namespace}" "${name}" "Normal" "AutoRedeploySuccess" "Git changes deployed successfully" || true
       else
         log "Auto redeploy failed with exit code: $deploy_exit_code"
+        # Extract key error information for the event
+        local error_summary
+        if echo "$deploy_output" | grep -q "AccessDeniedException"; then
+          # Extract the specific AWS permission error
+          error_summary=$(echo "$deploy_output" | grep "AccessDeniedException" | head -1 | sed 's/.*AccessDeniedException: //' | cut -c1-200)
+          error_summary="AWS Permission Error: ${error_summary}"
+        elif echo "$deploy_output" | grep -q "User.*is not authorized"; then
+          # Extract user authorization error
+          error_summary=$(echo "$deploy_output" | grep "User.*is not authorized" | head -1 | cut -c1-200)
+          error_summary="AWS Authorization Error: ${error_summary}"
+        elif echo "$deploy_output" | grep -q "ValidationError"; then
+          error_summary=$(echo "$deploy_output" | grep "ValidationError" | head -1 | cut -c1-200)
+        elif echo "$deploy_output" | grep -q "bootstrap.*version"; then
+          error_summary="CDK Bootstrap Error: Insufficient bootstrap version or permissions"
+        else
+          # Generic error with exit code
+          error_summary="CDK deployment failed (exit code: $deploy_exit_code). Check operator logs for details."
+        fi
+        
         # Don't set to Failed - let it stay in Succeeded with pending changes
         # This prevents infinite retry loops from main hook
         update_status "${namespace}" "${name}" "$PHASE_SUCCEEDED" "Auto deployment failed - Git changes pending manual deployment"
-        create_event "${namespace}" "${name}" "Warning" "AutoRedeployFailure" "Auto-deploy failed, manual deployment may be required" || true
+        create_event "${namespace}" "${name}" "Warning" "AutoRedeployFailure" "Auto-deploy failed: ${error_summary}" || true
       fi
     elif [[ "$has_changes" == "true" ]]; then
       if [[ "$autoRedeployAllowed" == "true" && "$deployAllowed" == "false" ]]; then
@@ -526,6 +545,10 @@ deploy_cdk_stack() {
         log "Available directories in repository root:"
         find "/tmp/cdk-project-${name}" -maxdepth 2 -type d 2>/dev/null | head -10 || true
         log "This is likely a configuration error in the CdkTsStack spec.path field"
+        
+        # Create event with helpful error information
+        create_event "${namespace}" "${name}" "Warning" "InvalidProjectPath" "Project path '${project_path}' not found in repository. Check spec.path field in CdkTsStack configuration." || true
+        
         update_status "${namespace}" "${name}" "$PHASE_FAILED" "Project path '${project_path}' not found in repository. Check spec.path field."
         return 1
       fi
@@ -562,6 +585,10 @@ deploy_cdk_stack() {
         log "Available directories in repository root:"
         find "/tmp/cdk-project-${name}" -maxdepth 2 -type d 2>/dev/null | head -10 || true
         log "This is likely a configuration error in the CdkTsStack spec.path field"
+        
+        # Create event with helpful error information
+        create_event "${namespace}" "${name}" "Warning" "InvalidProjectPath" "Project path '${project_path}' not found in repository. Check spec.path field in CdkTsStack configuration." || true
+        
         update_status "${namespace}" "${name}" "$PHASE_FAILED" "Project path '${project_path}' not found in repository. Check spec.path field."
         return 1
       fi
