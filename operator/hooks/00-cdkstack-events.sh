@@ -146,9 +146,13 @@ else
         log "Resource '${resourceName}' is in '${currentPhase}' phase - managed by other hook, skipping"
         continue
         ;;
+      "$PHASE_DEPLOYING")
+        # Skip Deploying state - it's either managed by Git sync auto-redeploy or will be processed in proper sequence
+        log "Resource '${resourceName}' is in 'Deploying' phase - likely managed by Git sync auto-redeploy, skipping"
+        continue
+        ;;
       "$PHASE_FAILED")
         # Only process failed state if it's not from Git sync auto-deploy failure
-        local lastMessage
         lastMessage=$(echo "$object" | jq -r '.status.message // ""')
         if [[ "$lastMessage" == *"Auto deployment failed"* ]] || [[ "$lastMessage" == *"Git sync"* ]]; then
           log "Resource '${resourceName}' failed due to Git sync - letting drift checker handle retry, skipping"
@@ -156,7 +160,7 @@ else
         fi
         log "Resource '${resourceName}' failed with non-Git sync error - will retry"
         ;;
-      ""|"$PHASE_CLONING"|"$PHASE_INSTALLING"|"$PHASE_DEPLOYING"|"$PHASE_SUCCEEDED")
+      ""|"$PHASE_CLONING"|"$PHASE_INSTALLING"|"$PHASE_SUCCEEDED")
         log "Resource '${resourceName}' in valid state '${currentPhase}' for main hook processing"
         ;;
       *)
