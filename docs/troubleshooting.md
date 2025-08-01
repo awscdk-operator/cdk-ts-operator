@@ -37,6 +37,49 @@ kubectl patch cdk my-cdk-stack \
   -p='{"status":{"phase":"","message":"Forced restart"}}'
 ```
 
+## Stuck Resource Deletion
+
+### Remove Finalizer for Stuck CRD Deletion
+
+If a CdkTsStack resource gets stuck during deletion due to finalizer issues (operator logic failure, AWS cleanup problems, etc.), you can manually remove the finalizer to force deletion.
+
+**Symptoms:**
+- Resource shows `deletionTimestamp` but won't complete deletion
+- Resource has finalizers preventing cleanup
+- Operator fails to properly clean up AWS resources
+
+**Check if resource is stuck:**
+```bash
+# Check for deletion timestamp and finalizers
+kubectl get cdk <stack-name> -o yaml | grep -E "(deletionTimestamp|finalizers)" -A 5
+```
+
+**Force removal by patching finalizer:**
+```bash
+# Remove the finalizer to force deletion
+kubectl patch cdk <stack-name> \
+  --type='merge' \
+  -p='{"metadata":{"finalizers":[]}}'
+```
+
+**Alternative method using JSON patch:**
+```bash
+# Remove specific finalizer
+kubectl patch cdk <stack-name> \
+  --type='json' \
+  -p='[{"op": "remove", "path": "/metadata/finalizers"}]'
+```
+
+**⚠️ Warning:** Removing finalizers bypasses the operator's cleanup logic. This may leave AWS CloudFormation stacks and resources orphaned. After forcing deletion, manually verify and clean up AWS resources if needed:
+
+```bash
+# Check for orphaned CloudFormation stacks
+aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE
+
+# Delete orphaned stack if found
+aws cloudformation delete-stack --stack-name <stack-name>
+```
+
 ## Common Issues and Solutions
 
 ### 1. Stack Stuck in "Cloning" Phase
@@ -287,7 +330,7 @@ spec:
 
 Or with Helm:
 ```bash
-helm upgrade awscdk-operator awscdk-operator/aws-cdk-operator \
+helm upgrade awscdk-operator aws-cdk-operator/aws-cdk-operator \
   --namespace awscdk-operator-system \
   --set operator.env.debugMode=true
 ```
@@ -424,7 +467,7 @@ helm uninstall awscdk-operator -n awscdk-operator-system
 kubectl delete namespace awscdk-operator-system
 
 # 4. Reinstall operator
-helm install awscdk-operator awscdk-operator/aws-cdk-operator \
+helm install awscdk-operator aws-cdk-operator/aws-cdk-operator \
   --namespace awscdk-operator-system \
   --create-namespace
 ```
@@ -475,4 +518,4 @@ operator:
 operator:
   env:
     nodeOptions: "--max-old-space-size=4096 --stack-size=65536"
-``` 
+```
