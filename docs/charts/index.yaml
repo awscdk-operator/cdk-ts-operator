@@ -2,8 +2,19 @@ apiVersion: v1
 entries:
   aws-cdk-operator:
   - apiVersion: v2
+    appVersion: v0.0.106
+    created: "2025-08-01T16:18:46.344383+12:00"
+    description: A Kubernetes operator for managing AWS CDK TypeScript stacks via
+      Git integration
+    digest: 8632b4117c75f5497d8ebdb47686a085945e4db7550edeb77b30fdaa1bbc3bd4
+    name: aws-cdk-operator
+    type: application
+    urls:
+    - https://awscdk.dev/charts/aws-cdk-operator-0.0.106.tgz
+    version: 0.0.106
+  - apiVersion: v2
     appVersion: v0.0.104
-    created: "2025-08-01T13:27:08.619266+12:00"
+    created: "2025-08-01T16:18:46.344077+12:00"
     description: A Kubernetes operator for managing AWS CDK TypeScript stacks via
       Git integration
     digest: 98a789afd76278d4397d6f9c7e271501e52aa93d67ab8db8672512de6621a7ff
@@ -14,7 +25,7 @@ entries:
     version: 0.0.105
   - apiVersion: v2
     appVersion: v0.0.104
-    created: "2025-08-01T13:27:08.619+12:00"
+    created: "2025-08-01T16:18:46.343416+12:00"
     description: A Kubernetes operator for managing AWS CDK TypeScript stacks via
       Git integration
     digest: 1822791c1bb58259fd23630657d529d4ae53ba34fe02da0c7ac3cafb52f03a75
@@ -23,4 +34,4 @@ entries:
     urls:
     - https://awscdk.dev/charts/aws-cdk-operator-0.0.104.tgz
     version: 0.0.104
-generated: "2025-08-01T13:27:08.618421+12:00"
+generated: "2025-08-01T16:18:46.342079+12:00"
