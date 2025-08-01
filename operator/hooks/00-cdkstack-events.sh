@@ -143,12 +143,37 @@ else
       continue
     fi
     
+    # Skip resources being managed by other hooks (drift checker, git sync)
+    case "${currentPhase}" in
+      "$PHASE_DRIFT_CHECKING"|"$PHASE_GIT_SYNC_CHECKING"|"$PHASE_DELETING")
+        log "Resource '${resourceName}' is in '${currentPhase}' phase - managed by other hook, skipping"
+        continue
+        ;;
+      "$PHASE_FAILED")
+        # Only process failed state if it's not from Git sync auto-deploy failure
+        local lastMessage
+        lastMessage=$(echo "$object" | jq -r '.status.message // ""')
+        if [[ "$lastMessage" == *"Auto deployment failed"* ]] || [[ "$lastMessage" == *"Git sync"* ]]; then
+          log "Resource '${resourceName}' failed due to Git sync - letting drift checker handle retry, skipping"
+          continue
+        fi
+        log "Resource '${resourceName}' failed with non-Git sync error - will retry"
+        ;;
+      ""|"$PHASE_CLONING"|"$PHASE_INSTALLING"|"$PHASE_DEPLOYING"|"$PHASE_SUCCEEDED")
+        log "Resource '${resourceName}' in valid state '${currentPhase}' for main hook processing"
+        ;;
+      *)
+        log "WARNING: Resource '${resourceName}' in unknown phase '${currentPhase}' - skipping to avoid conflicts"
+        continue
+        ;;
+    esac
+    
     # Check if deploy action is allowed
     deployAllowed=$(echo "$object" | jq -r '.spec.actions.deploy')
     if [[ "${deployAllowed}" == "false" ]]; then
       log "Deploy action is disabled for '${resourceName}', skipping deployment"
       # If resource hasn't been deployed yet, mark it as such
-      if [[ "${currentPhase}" == "" || "${currentPhase}" == "$PHASE_FAILED" ]]; then
+      if [[ "${currentPhase}" == "" ]]; then
         update_status "${resourceNs}" "${resourceName}" "$PHASE_FAILED" "Deploy action is disabled"
       fi
       continue
