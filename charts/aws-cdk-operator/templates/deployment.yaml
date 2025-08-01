@@ -62,14 +62,6 @@ spec:
             - containerPort: {{ .Values.container.port }}
               name: {{ .Values.container.portName }}
               protocol: TCP
-          {{- if .Values.container.probes.liveness.enabled }}
-          livenessProbe:
-            {{- toYaml (omit .Values.container.probes.liveness "enabled") | nindent 12 }}
-          {{- end }}
-          {{- if .Values.container.probes.readiness.enabled }}
-          readinessProbe:
-            {{- toYaml (omit .Values.container.probes.readiness "enabled") | nindent 12 }}
-          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
