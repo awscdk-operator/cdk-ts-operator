@@ -406,8 +406,10 @@ check_git_sync() {
         create_event "${namespace}" "${name}" "Normal" "AutoRedeploySuccess" "Git changes deployed successfully" || true
       else
         log "Auto redeploy failed with exit code: $deploy_exit_code"
-        update_status "${namespace}" "${name}" "$PHASE_FAILED" "Auto deployment failed: exit code $deploy_exit_code"
-        create_event "${namespace}" "${name}" "Warning" "AutoRedeployFailure" "Failed to deploy Git changes" || true
+        # Don't set to Failed - let it stay in Succeeded with pending changes
+        # This prevents infinite retry loops from main hook
+        update_status "${namespace}" "${name}" "$PHASE_SUCCEEDED" "Auto deployment failed - Git changes pending manual deployment"
+        create_event "${namespace}" "${name}" "Warning" "AutoRedeployFailure" "Auto-deploy failed, manual deployment may be required" || true
       fi
     elif [[ "$has_changes" == "true" ]]; then
       if [[ "$autoRedeployAllowed" == "true" && "$deployAllowed" == "false" ]]; then
@@ -490,13 +492,15 @@ deploy_cdk_stack() {
   case ${current_phase} in
     "" | "$PHASE_FAILED")
       log "Phase: Starting new reconciliation, moving to Cloning."
+      # Clean up any existing temporary directories to ensure fresh start
+      rm -rf "/tmp/cdk-project-${name}" "/tmp/cdk-gitsync-${name}"* "/tmp/cdk-drift-${name}"* 2>/dev/null || true
       update_status "${namespace}" "${name}" "$PHASE_CLONING" "Cloning repository..."
       ;;
     "$PHASE_CLONING")
       log "Phase: Cloning repository ${repository} (ref: ${git_ref})"
       local target_dir="/tmp/cdk-project-${name}"
       
-      # Remove target directory if it exists
+      # Remove target directory if it exists (ensure clean state)
       rm -rf "$target_dir"
       
       # Set Git configuration for container environment
@@ -519,7 +523,10 @@ deploy_cdk_stack() {
       # Check if target directory exists
       if [[ ! -d "${target_dir}" ]]; then
         log "Error: Project path '${project_path}' does not exist in cloned repository"
-        update_status "${namespace}" "${name}" "$PHASE_FAILED" "Project path '${project_path}' not found in repository"
+        log "Available directories in repository root:"
+        find "/tmp/cdk-project-${name}" -maxdepth 2 -type d 2>/dev/null | head -10 || true
+        log "This is likely a configuration error in the CdkTsStack spec.path field"
+        update_status "${namespace}" "${name}" "$PHASE_FAILED" "Project path '${project_path}' not found in repository. Check spec.path field."
         return 1
       fi
 
@@ -552,7 +559,10 @@ deploy_cdk_stack() {
       # Check if target directory exists
       if [[ ! -d "${target_dir}" ]]; then
         log "Error: Project path '${project_path}' does not exist in cloned repository"
-        update_status "${namespace}" "${name}" "$PHASE_FAILED" "Project path '${project_path}' not found in repository"
+        log "Available directories in repository root:"
+        find "/tmp/cdk-project-${name}" -maxdepth 2 -type d 2>/dev/null | head -10 || true
+        log "This is likely a configuration error in the CdkTsStack spec.path field"
+        update_status "${namespace}" "${name}" "$PHASE_FAILED" "Project path '${project_path}' not found in repository. Check spec.path field."
         return 1
       fi
 

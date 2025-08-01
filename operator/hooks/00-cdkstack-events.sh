@@ -19,6 +19,11 @@ kubernetes:
 - apiVersion: awscdk.dev/v1alpha1
   kind: CdkTsStack
   executeHookOnEvent: ["Added", "Modified", "Deleted"]
+  allowFailure: true
+  queue:
+    name: "cdkstack-main"
+    maxRetries: 3
+    retryDelay: "30s"
 EOF
 else
   # Hook logic is executed when an event occurs.
