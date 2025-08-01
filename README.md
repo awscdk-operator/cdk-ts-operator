@@ -41,7 +41,14 @@ For detailed installation options, see the [Installation Guide](docs/installatio
      --namespace=awscdk-operator-system
    ```
 
-2. Deploy your first CDK stack:
+2. Create a secret with private RSA ssh key
+   ```bash
+   kubectl create secret generic awscdk-operator-ssh-key \
+     --from-file=ssh-privatekey=$HOME/.ssh/argocd-prod \
+     -n awscdk-operator-system
+   ```
+
+3. Deploy your first CDK stack:
    ```yaml
    apiVersion: awscdk.dev/v1alpha1
    kind: CdkTsStack
@@ -62,7 +69,7 @@ For detailed installation options, see the [Installation Guide](docs/installatio
        driftDetection: true
    ```
 
-3. Apply and monitor:
+4. Apply and monitor:
    ```bash
    kubectl apply -f my-stack.yaml
    kubectl get cdk
