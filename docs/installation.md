@@ -90,38 +90,32 @@ For GitOps workflows with ArgoCD, create an Application resource:
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: awscdk-operator
+  name: awscdk
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     chart: aws-cdk-operator
     repoURL: https://awscdk.dev/charts
-    targetRevision: "1.0.0"
+    targetRevision: 0.0.105
     helm:
-      parameters:
-        - name: operator.env.debugMode
-          value: "false"
-        - name: operator.env.driftCheckCron
-          value: "*/10 * * * *"
-        - name: image.tag
-          value: "v1.0.0"
-      values: |
+      valuesObject:
+        image:
+          tag: "v0.0.104"
+        operator:
+          env:
+            debugMode: true
+            driftCheckCron: "*/10 * * * *"
+            gitSyncCheckCron: "*/5 * * * *"
         resources:
           limits:
             cpu: 500m
             memory: 512Mi
           requests:
             cpu: 100m
-            memory: 128Mi
-        
-        ssh:
-          secretName: "awscdk-operator-ssh-key"
-          hosts:
-            github:
-              hostname: "github.com"
-              user: "git"
-              strictHostKeyChecking: true
+            memory: 256Mi
   destination:
     server: https://kubernetes.default.svc
     namespace: awscdk-operator-system
@@ -131,12 +125,6 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-    retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
 ```
 
 Apply the ArgoCD Application:
